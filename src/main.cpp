@@ -8,7 +8,12 @@ int screenh = GetScreenHeight();
 
 //textures
 Texture2D bg;
+Texture2D menupngs[3] = {
+    LoadTexture("assets/menu/exit_button.png"),
+    LoadTexture("assets/menu/play_button.png"),
+    LoadTexture("assets/menu/title.png")
 
+};
 
 int main(){
     InitWindow(screenw,screenh,"bounce back haven");
@@ -56,11 +61,13 @@ int main(){
             for(int i=0;i<count;i++){
                 Color c = (i==index) ? WHITE : GRAY;
                 DrawText(items[i],screenw/2-MeasureText(items[i],20)/2,screenh/2-50+i*30,20,c);
-
+                DrawTexture(menupngs[i],screenw/2-MeasureText(items[i],20)/2-100,screenh/2-50+i*30,WHITE);
                 if(i==index){
-                    DrawText(">",screenw/2-MeasureText(items[i],20)/2-50,screenh/2-50+i*30,20,WHITE);
+                    DrawText(">",screenw/2-MeasureText(items[i],20)/2 - 50,screenh/2-50+i*30,20,WHITE);
+                    DrawTextureEx(menupngs[index],{(float)screenw/2-MeasureText(items[i],20)/2-100,(float)screenh/2-50+i*30},0,1.5,WHITE);
                 }
             }
-            
+
         }
+    }
 }
