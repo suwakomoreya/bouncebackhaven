@@ -1,10 +1,10 @@
 #pragma once
-#include <bits/stdc++.h>;
-#include "raylibs.h";
-#include "game.h";
+#include <bits/stdc++.h>
+#include "raylib.h"
+#include "game.h"
 
-int screenw = GetScreenWidth();
-int screenh = GetScreenHeight();
+const int screenw = 1280;
+const int screenh = 720;
 //textures
 Texture2D gamebg[3];
 screen current;

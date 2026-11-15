@@ -1,0 +1,1 @@
+cd "$HOME/hackclub hcb/bouncebackhaven" && mkdir -p build && g++ -std=c++17 -O2 -Wall -I. -I"$HOME/libs/raylib/include" src/*.cpp -o build/bouncebackhaven "$HOME/libs/raylib/lib/libraylib.a" -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo -framework CoreAudio -framework QuartzCore && ./build/bouncebackhaven
