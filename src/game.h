@@ -5,7 +5,7 @@
 enum class screen{
     menu,
     modes,
+    exit,
     game1,
     game2,
-    exit
 };
