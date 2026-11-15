@@ -1,0 +1,17 @@
+{
+  "configurations": [
+    {
+      "name": "macOS (g++)",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "${env:HOME}/libs/raylib/include"
+      ],
+      "defines": [],
+      "compilerPath": "/usr/bin/g++",
+      "cStandard": "c17",
+      "cppStandard": "c++17",
+      "intelliSenseMode": "macos-clang-x64"
+    }
+  ],
+  "version": 4
+}
