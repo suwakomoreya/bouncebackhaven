@@ -4,6 +4,7 @@
 
 enum class screen{
     menu,
+    modes,
     game1,
     game2,
     exit

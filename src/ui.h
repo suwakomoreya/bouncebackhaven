@@ -2,7 +2,7 @@
 #include <bits/stdc++.h>
 #include "raylib.h"
 #include "game.h"
-#include "udp_receiver.h"
+
 const int screenw = 1280;
 const int screenh = 720;
 //textures
