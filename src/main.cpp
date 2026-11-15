@@ -3,8 +3,6 @@
 #include "ui.h";
 #include "game.h";
 
-int screenw = GetScreenWidth();
-int screenh = GetScreenHeight();
 
 //textures
 Texture2D bg;

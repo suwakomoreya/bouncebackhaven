@@ -3,8 +3,8 @@
 #include "raylibs.h";
 #include "game.h";
 
-const int screenw = GetScreenWidth();
-const int screenh = GetScreenHeight();
+int screenw = GetScreenWidth();
+int screenh = GetScreenHeight();
 //textures
 Texture2D gamebg[3];
 screen current;
@@ -20,5 +20,5 @@ void drawbg(){
         }
     }
 
-    
+
 }
