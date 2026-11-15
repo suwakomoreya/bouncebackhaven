@@ -1,6 +1,6 @@
 #pragma once
-#include <bits/stdc++.h>>
-#include "raylibs.h";
+#include <bits/stdc++.h>
+#include "raylib.h"
 
 enum class screen{
     menu,
