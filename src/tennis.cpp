@@ -3,8 +3,6 @@
 
 namespace {
 
-// Court geometry, measured from assets/backgrounds/tennis_background.png
-// (a top-down court: net across the middle, your half is the bottom one).
 const float kCourtL = 355.0f;
 const float kCourtR = 925.0f;
 const float kCourtT = 8.0f;
@@ -14,15 +12,18 @@ const float kNetY   = 357.0f;
 const float kPlayerTop = kNetY + 30.0f;   // the net stops you
 const float kPlayerBot = kCourtB - 12.0f;
 
-const float kRacketRX = 34.0f;
+const float kRacketRX = 38.0f;
 const float kRacketRY = 40.0f;
 const float kBallR    = 11.0f;
+//steered across court so the balls dont go out of range
+const float kAimL = kCourtL + 18.0f;
+const float kAimR = kCourtR - 18.0f;
 
 const float kBaseSpeed  = 235.0f;  // pixels/second at combo 0
 const float kHpMax      = 100.0f;
 const float kMissDamage = 12.0f;
-const float kComboSpeedStep = 0.05f;  // +5% ball speed per consecutive hit
-const int   kComboSpeedCap = 50;
+const float kComboSpeedStep = 0.025f;  // +2.5% ball speed per consecutive hit
+const int   kComboSpeedCap = 100;      // same top speed, reached twice as slowly
 
 const Color kBallYellow{223, 255, 79, 255};
 
@@ -52,7 +53,6 @@ struct Game {
     int hits = 0;
     float spawnTimer = 1.2f;
 
-    float shake = 0.0f;
     float hurtFlash = 0.0f;
     float comboPop = 0.0f;
     float time = 0.0f;
@@ -63,7 +63,6 @@ struct Game {
 
 Game g;
 
-// Best run so far; survives restarts within a session.
 int gBestScore = 0;
 int gBestCombo = 0;
 
@@ -78,9 +77,79 @@ Vector2 vnorm(Vector2 a) {
     const float l = vlen(a);
     return l > 0.0001f ? Vector2{a.x / l, a.y / l} : Vector2{0.0f, 1.0f};
 }
+
+Vector2 clampToReach(Vector2 origin, Vector2 direction) {
+    if (direction.y < 0.001f) direction.y = 0.001f;
+    const float toBaseline = kPlayerBot - origin.y;
+    const float xAtBaseline = origin.x + direction.x * (toBaseline / direction.y);
+    float clampedX = xAtBaseline;
+    if (clampedX < kAimL) clampedX = kAimL;
+    if (clampedX > kAimR) clampedX = kAimR;
+    if (clampedX == xAtBaseline) return direction;
+    return vnorm(Vector2{clampedX - origin.x, toBaseline});
+}
 Vector2 vrot(Vector2 a, float radians) {
     const float c = cosf(radians), s = sinf(radians);
     return Vector2{a.x * c - a.y * s, a.x * s + a.y * c};
+}
+
+// --- audio ---------------------------------------------------------------
+Sound gHit[3];
+Music gTrack;
+bool gAudioLoaded = false;
+bool gTrackPlaying = false;
+
+const char* kHitPaths[3] = {
+    "assets/audio/freesound-community-tennis-ball-being-hit-72611_g91Q2h6q.mp3",
+    "assets/audio/freesound-community-tennis-ball-being-hit-72611_puNda1ef.mp3",
+    "assets/audio/freesound-community-tennis-ball-being-hit-72611_wRaTEFhb.mp3",
+};
+const char* kTrackPath =
+    "assets/audio/Graffiti - KV Royalty Free Music No Copyright Background Music For Videos Hip Hop Uplifting.mp3";
+
+void loadAudio() {
+    if (gAudioLoaded || !IsAudioDeviceReady()) return;
+    for (int i = 0; i < 3; ++i) {
+        gHit[i] = LoadSound(kHitPaths[i]);
+        SetSoundVolume(gHit[i], 0.75f);
+    }
+    gTrack = LoadMusicStream(kTrackPath);
+    gTrack.looping = true;
+    SetMusicVolume(gTrack, 0.35f);
+    gAudioLoaded = true;
+}
+//randomize
+void playHitSound() {
+    if (!gAudioLoaded) return;
+    const int index = GetRandomValue(0, 2);
+    SetSoundPitch(gHit[index], randf(0.92f, 1.10f));
+    PlaySound(gHit[index]);
+}
+
+void playMissSound() {
+    if (!gAudioLoaded) return;
+    SetSoundPitch(gHit[1], 0.62f);
+    PlaySound(gHit[1]);
+}
+
+void startMusic() {
+    if (!gAudioLoaded || gTrackPlaying) return;
+    PlayMusicStream(gTrack);
+    gTrackPlaying = true;
+}
+
+void stopMusic() {
+    if (!gAudioLoaded || !gTrackPlaying) return;
+    StopMusicStream(gTrack);
+    gTrackPlaying = false;
+}
+//hide curosr
+void setCursorHidden(bool hidden) {
+    static bool hiddenNow = false;
+    if (hidden == hiddenNow) return;
+    if (hidden) HideCursor();
+    else ShowCursor();
+    hiddenNow = hidden;
 }
 
 float speedMultiplier() {
@@ -89,7 +158,7 @@ float speedMultiplier() {
 }
 
 float nextSpawnDelay() {
-    const float delay = 0.85f - (float)g.combo * 0.013f;
+    const float delay = 0.85f - (float)g.combo * 0.0065f;
     return delay > 0.16f ? delay : 0.16f;
 }
 
@@ -97,7 +166,7 @@ void addBall(Vector2 origin, Vector2 direction, float speed) {
     if (g.balls.size() > 120) return;
     Ball ball;
     ball.pos = origin;
-    ball.vel = vscale(direction, speed);
+    ball.vel = vscale(clampToReach(origin, direction), speed);
     ball.spin = randf(0.0f, 6.28f);
     ball.trail.push_back(origin);
     g.balls.push_back(ball);
@@ -124,7 +193,7 @@ void spawnFan() {
     }
 }
 
-// Three balls in a line, arriving one behind the other.
+// three balls in a row
 void spawnStream() {
     const Vector2 origin{randf(kCourtL + 80.0f, kCourtR - 80.0f), kCourtT - 10.0f};
     const Vector2 target{randf(kCourtL + 40.0f, kCourtR - 40.0f),
@@ -174,6 +243,7 @@ void updateSparks(float dt) {
 void registerHit(Vector2 at) {
     ++g.combo;
     ++g.hits;
+    playHitSound();
     if (g.combo > gBestCombo) gBestCombo = g.combo;
 
     const int multiplier = 1 + g.combo / 5;
@@ -185,9 +255,9 @@ void registerHit(Vector2 at) {
 }
 
 void registerMiss() {
+    playMissSound();
     g.hp -= kMissDamage;
     g.combo = 0;
-    g.shake = 14.0f;
     g.hurtFlash = 0.35f;
     if (g.hp <= 0.0f) {
         g.hp = 0.0f;
@@ -196,7 +266,7 @@ void registerMiss() {
     }
 }
 
-void drawBall(const Ball& ball) {
+void drawBall(const Ball& ball, Texture2D sprite) {
     const int trailCount = (int)ball.trail.size();
     for (int i = 0; i < trailCount; ++i) {
         const float t = (float)(i + 1) / (float)trailCount;
@@ -204,16 +274,38 @@ void drawBall(const Ball& ball) {
                     Fade(kBallYellow, 0.06f + 0.18f * t));
     }
 
+    if (sprite.id != 0) {
+        const float diameter = kBallR * 2.0f;
+        const float scale = diameter / (float)sprite.width;
+        DrawTexturePro(sprite,
+                       Rectangle{0.0f, 0.0f, (float)sprite.width, (float)sprite.height},
+                       Rectangle{ball.pos.x - kBallR, ball.pos.y - kBallR,
+                                 (float)sprite.width * scale, (float)sprite.height * scale},
+                       Vector2{0.0f, 0.0f}, 0.0f, WHITE);
+        return;
+    }
+
     DrawCircleV(Vector2{ball.pos.x + 2.0f, ball.pos.y + 3.0f}, kBallR, Fade(BLACK, 0.30f));
     DrawCircleV(ball.pos, kBallR, kBallYellow);
 
-    // The seam, faked with two arcs that rotate with the ball.
     const float deg = ball.spin * 57.29578f;
     DrawCircleSectorLines(ball.pos, kBallR - 1.0f, deg, deg + 130.0f, 14, Fade(WHITE, 0.85f));
     DrawCircleSectorLines(ball.pos, kBallR - 1.0f, deg + 180.0f, deg + 310.0f, 14, Fade(WHITE, 0.85f));
 }
 
-void drawRacket(Vector2 center) {
+void drawRacket(Vector2 center, Texture2D racket) {
+    if (racket.id != 0) {
+        const float headX = 40.0f;
+        const float headY = 43.0f;
+        DrawTexturePro(racket,
+                       Rectangle{0.0f, 0.0f, (float)racket.width, (float)racket.height},
+                       Rectangle{center.x - headX, center.y - headY,
+                                 (float)racket.width, (float)racket.height},
+                       Vector2{0.0f, 0.0f}, 0.0f, WHITE);
+        return;
+    }
+
+    // Fallback: draw a racket in code if the sprite is missing.
     DrawEllipse((int)center.x + 3, (int)center.y + 4, kRacketRX, kRacketRY, Fade(BLACK, 0.35f));
     DrawEllipse((int)center.x, (int)center.y, kRacketRX, kRacketRY, Fade(Color{16, 20, 36, 255}, 0.80f));
     DrawEllipseLines((int)center.x, (int)center.y, kRacketRX, kRacketRY, RAYWHITE);
@@ -301,12 +393,14 @@ void Reset() {
     g.combo = 0;
     g.hits = 0;
     g.spawnTimer = 1.2f;
-    g.shake = 0.0f;
     g.hurtFlash = 0.0f;
     g.comboPop = 0.0f;
     g.time = 0.0f;
     g.over = false;
     g.wantsExit = false;
+
+    loadAudio();
+    startMusic();
 }
 
 bool WantsExit() {
@@ -318,24 +412,30 @@ void Update() {
     if (dt > 0.05f) dt = 0.05f;  // don't let a stalled window teleport the ball
     g.time += dt;
 
-    DisableCursor();
+    if (gTrackPlaying) UpdateMusicStream(gTrack);
+
+    setCursorHidden(true);
 
     if (g.comboPop > 0.0f) g.comboPop -= dt * 4.0f;
     if (g.comboPop < 0.0f) g.comboPop = 0.0f;
-    if (g.shake > 0.0f) g.shake -= dt * 40.0f;
-    if (g.shake < 0.0f) g.shake = 0.0f;
     if (g.hurtFlash > 0.0f) g.hurtFlash -= dt;
     if (g.hurtFlash < 0.0f) g.hurtFlash = 0.0f;
 
     if (g.over) {
         updateSparks(dt);
         if (IsKeyPressed(KEY_R)) Reset();
-        if (IsKeyPressed(KEY_ESCAPE)) g.wantsExit = true;
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            g.wantsExit = true;
+            setCursorHidden(false);
+            stopMusic();
+        }
         return;
     }
 
     if (IsKeyPressed(KEY_ESCAPE)) {
         g.wantsExit = true;
+        setCursorHidden(false);
+        stopMusic();
         return;
     }
 
@@ -387,33 +487,27 @@ void Update() {
 
 void Draw() {
     static Texture2D court{};
+    static Texture2D racket{};
+    static Texture2D ballSprite{};
     static bool courtLoaded = false;
     if (!courtLoaded) {
         court = LoadTexture("assets/backgrounds/tennis_background.png");
+        racket = LoadTexture("assets/game1/tennis_racket.png");
+        SetTextureFilter(racket, TEXTURE_FILTER_POINT);  // keep the pixel art crisp
+        ballSprite = LoadTexture("assets/game1/tennis_ball.png");
         courtLoaded = true;
     }
 
-    const Vector2 shake{
-        g.shake > 0.0f ? randf(-g.shake, g.shake) : 0.0f,
-        g.shake > 0.0f ? randf(-g.shake, g.shake) : 0.0f,
-    };
-
-    Camera2D camera{};
-    camera.offset = shake;
-    camera.zoom = 1.0f;
-
-    BeginMode2D(camera);
     if (court.id != 0) DrawTexture(court, 0, 0, WHITE);
     else DrawRectangle(0, 0, 1280, 720, Color{28, 34, 64, 255});
 
-    for (const Ball& ball : g.balls) drawBall(ball);
+    for (const Ball& ball : g.balls) drawBall(ball, ballSprite);
     for (const Spark& spark : g.sparks) {
         const float t = spark.life / spark.maxLife;
         DrawCircleV(spark.pos, 2.0f + 3.0f * t, Fade(kBallYellow, t));
     }
 
-    if (!g.over) drawRacket(g.racket);
-    EndMode2D();
+    if (!g.over) drawRacket(g.racket, racket);
 
     if (g.hurtFlash > 0.0f) {
         DrawRectangle(0, 0, 1280, 720, Fade(Color{200, 40, 40, 255}, g.hurtFlash * 0.45f));
@@ -421,6 +515,14 @@ void Draw() {
 
     drawHud();
     if (g.over) drawGameOver();
+}
+
+void Shutdown() {
+    stopMusic();
+    if (!gAudioLoaded) return;
+    for (int i = 0; i < 3; ++i) UnloadSound(gHit[i]);
+    UnloadMusicStream(gTrack);
+    gAudioLoaded = false;
 }
 
 }  // namespace tennis

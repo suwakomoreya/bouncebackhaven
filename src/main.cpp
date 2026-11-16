@@ -4,8 +4,9 @@
 #include "game.h"
 #include "ui.h"
 
-int main(){
-    InitWindow(screenw,screenh,"bounce back haven");
+int main() {
+    InitWindow(screenw, screenh, "bounce back haven");
+    InitAudioDevice();
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
     Vector2 Cursor;
@@ -26,7 +27,7 @@ int main(){
         LoadTexture("assets/sports/tennis_button_hover.png"),
         LoadTexture("assets/sports/golf_button_hover.png"),
         LoadTexture("assets/sports/back_button_hover.png")
-    };
+    }
 
     Texture2D menupngs[] = {
         LoadTexture("assets/menu/exit_button.png"),
@@ -101,7 +102,6 @@ int main(){
 
         else if(current == screen::modes){
             DrawTexture(sport_title,0,0,WHITE);
-
             //tennis
             if(game1){
                 DrawTexture(sporthover[0],0,0,WHITE);
@@ -139,9 +139,8 @@ int main(){
         else if(current == screen::game1){
             ClearBackground(WHITE);
             DrawText("TENNIS GAME",500,300,40,WHITE);
-            DrawTexture(tennisbg, 0, 0, WHITE);
-            DrawTexture(racket, Cursor.x - 39, Cursor.y - 125, WHITE);
-
+            tennis::Update();
+            tennis::Draw();
 
             if(IsKeyPressed(KEY_ESCAPE)){
                 current = screen::modes;
@@ -174,6 +173,8 @@ int main(){
         UnloadTexture(sporthover[i]);
     }
 
+    tennis::Shutdown();
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
