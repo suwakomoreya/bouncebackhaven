@@ -3,7 +3,7 @@
 #include "raylib.h"
 #include "game.h"
 #include "ui.h"
-// adding stuff
+#include "tennis.h"
 int main() {
     InitWindow(screenw, screenh, "bounce back haven");
     InitAudioDevice();
@@ -11,11 +11,9 @@ int main() {
     SetExitKey(KEY_NULL);
     Vector2 Cursor;
 
-    //textures (must load after InitWindow)
     Texture2D bg = LoadTexture("assets/backgrounds/menu_background.png");
     Texture2D title = LoadTexture("assets/menu/title.png");
     Texture2D sport_title = LoadTexture("assets/sports/sport_choice_title.png");
-    Texture2D tennisbg = LoadTexture("assets/backgrounds/tennis_background.png");
 
     Texture2D sportpngs[] = {
         LoadTexture("assets/sports/tennis_button.png"),
@@ -27,7 +25,7 @@ int main() {
         LoadTexture("assets/sports/tennis_button_hover.png"),
         LoadTexture("assets/sports/golf_button_hover.png"),
         LoadTexture("assets/sports/back_button_hover.png")
-    }
+    };
 
     Texture2D menupngs[] = {
         LoadTexture("assets/menu/exit_button.png"),
@@ -39,26 +37,8 @@ int main() {
         LoadTexture("assets/menu/play_button_hover.png")
     };
 
-    Texture2D racket = LoadTexture("assets/game1/tennis_racket.png");
-
-    const char* items[] = {
-        "Game 1",
-        "Game 2",
-        "Exit"
-    };
-
-    const char* sportspick[] = {
-        "Tennis",
-        "Golf",
-        "Back"
-    };
-
-    const int count = 3;
-    int index = 0;
-
-    // tennis ball variables
-
     screen current = screen::menu;
+    bool tennisStarted = false;
 
     while(!WindowShouldClose() && current != screen::exit){
         Cursor = GetMousePosition();
@@ -102,10 +82,10 @@ int main() {
 
         else if(current == screen::modes){
             DrawTexture(sport_title,0,0,WHITE);
-            //tennis
             if(game1){
                 DrawTexture(sporthover[0],0,0,WHITE);
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                    tennisStarted = false;
                     current = screen::game1;
                 }
             }
@@ -137,12 +117,13 @@ int main() {
         }
 
         else if(current == screen::game1){
-            ClearBackground(WHITE);
-            DrawText("TENNIS GAME",500,300,40,WHITE);
+            if(!tennisStarted){
+                tennis::Reset();
+                tennisStarted = true;
+            }
             tennis::Update();
             tennis::Draw();
-
-            if(IsKeyPressed(KEY_ESCAPE)){
+            if(tennis::WantsExit()){
                 current = screen::modes;
             }
         }

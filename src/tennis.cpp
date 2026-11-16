@@ -32,6 +32,7 @@ struct Ball {
     Vector2 vel{};
     float spin = 0.0f;
     bool dead = false;
+    bool returned = false;
     std::deque<Vector2> trail;
 };
 
@@ -462,16 +463,19 @@ void Update() {
         ball.trail.push_front(ball.pos);
         while (ball.trail.size() > 7) ball.trail.pop_back();
 
-        // Contact with the racket head is the hit.
         const float nx = (ball.pos.x - g.racket.x) / (kRacketRX + kBallR);
         const float ny = (ball.pos.y - g.racket.y) / (kRacketRY + kBallR);
-        if (nx * nx + ny * ny <= 1.0f) {
+        if (!ball.returned && nx * nx + ny * ny <= 1.0f) {
             registerHit(ball.pos);
-            ball.dead = true;
-        } else if (ball.pos.y - kBallR > kCourtB + 40.0f) {
+            ball.returned = true;
+            ball.vel.y = -fabsf(ball.vel.y);
+            ball.vel.x += nx * 120.0f;
+        } else if (!ball.returned && ball.pos.y - kBallR > kCourtB + 40.0f) {
             registerMiss();
             ball.dead = true;
-        } else if (ball.pos.y > kCourtB + 260.0f || ball.pos.x < -200.0f || ball.pos.x > 1480.0f) {
+        } else if (ball.returned && ball.pos.y + kBallR < kCourtT - 40.0f) {
+            ball.dead = true;
+        } else if (ball.pos.y > kCourtB + 260.0f || ball.pos.y < -260.0f || ball.pos.x < -200.0f || ball.pos.x > 1480.0f) {
             ball.dead = true;
         }
 
