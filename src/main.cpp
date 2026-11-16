@@ -17,29 +17,29 @@ int main(){
 
     Texture2D sportpngs[] = {
         LoadTexture("assets/sports/tennis_button.png"),
-        // LoadTexture("assets/sports/golf_button.png"),
+        LoadTexture("assets/sports/golf_button.png"),
         LoadTexture("assets/sports/back_button.png")
     };
 
     Texture2D sporthover[] = {
         LoadTexture("assets/sports/tennis_button_hover.png"),
-        // LoadTexture("assets/sports/golf_button_hover.png"),
+        LoadTexture("assets/sports/golf_button_hover.png"),
         LoadTexture("assets/sports/back_button_hover.png")
     };
 
     Texture2D menupngs[] = {
         LoadTexture("assets/menu/exit_button.png"),
-        LoadTexture("assets/menu/play_button.png"),
+        LoadTexture("assets/menu/play_button.png")
     };
 
     Texture2D menuhover[] = {
         LoadTexture("assets/menu/exit_button_hover.png"),
-        LoadTexture("assets/menu/play_button_hover.png"),
+        LoadTexture("assets/menu/play_button_hover.png")
     };
 
     const char* items[] = {
         "Game 1",
-        // "Game 2",
+        "Game 2",
         "Exit"
     };
 
@@ -49,7 +49,7 @@ int main(){
         "Back"
     };
 
-    const int count = 2;
+    const int count = 3;
     int index = 0;
 
     screen current = screen::menu;
@@ -60,9 +60,9 @@ int main(){
         bool play = CheckCollisionPointRec(Cursor,{463,332,360,68});
         bool exit = CheckCollisionPointRec(Cursor,{460,444,360,68});
 
-        bool back = CheckCollisionPointRec(Cursor,{463,332,360,68});
-        bool game1 = CheckCollisionPointRec(Cursor,{460,444,360,68});
-        // bool game2 = CheckCollisionPointRec(Cursor,{0,0,360,68});
+        bool back = CheckCollisionPointRec(Cursor,{463,476,360,68});
+        bool game1 = CheckCollisionPointRec(Cursor,{463,300,360,68});
+        bool game2 = CheckCollisionPointRec(Cursor,{463,388,360,68});
 
         //drawing
         BeginDrawing();
@@ -97,7 +97,8 @@ int main(){
         else if(current == screen::modes){
             DrawTexture(sport_title,0,0,WHITE);
 
-            if(back){
+            //tennis
+            if(game1){
                 DrawTexture(sporthover[0],0,0,WHITE);
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
                     current = screen::game1;
@@ -107,19 +108,39 @@ int main(){
                 DrawTexture(sportpngs[0],0,0,WHITE);
             }
 
-            if(game1){
+            //golf
+            if(game2){
                 DrawTexture(sporthover[1],0,0,WHITE);
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-                    current = screen::menu;
+                    current = screen::game2;
                 }
             }
             else{
                 DrawTexture(sportpngs[1],0,0,WHITE);
             }
+
+            //back
+            if(back){
+                DrawTexture(sporthover[2],0,0,WHITE);
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
+                    current = screen::menu;
+                }
+            }
+            else{
+                DrawTexture(sportpngs[2],0,0,WHITE);
+            }
         }
 
         else if(current == screen::game1){
             DrawText("TENNIS GAME",500,300,40,WHITE);
+
+            if(IsKeyPressed(KEY_ESCAPE)){
+                current = screen::modes;
+            }
+        }
+
+        else if(current == screen::game2){
+            DrawText("GOLF GAME",500,300,40,WHITE);
 
             if(IsKeyPressed(KEY_ESCAPE)){
                 current = screen::modes;
@@ -137,6 +158,9 @@ int main(){
     for(int i=0;i<2;i++){
         UnloadTexture(menupngs[i]);
         UnloadTexture(menuhover[i]);
+    }
+
+    for(int i=0;i<3;i++){
         UnloadTexture(sportpngs[i]);
         UnloadTexture(sporthover[i]);
     }
