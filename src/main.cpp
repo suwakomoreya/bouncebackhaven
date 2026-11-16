@@ -15,6 +15,7 @@ int main() {
     Texture2D bg = LoadTexture("assets/backgrounds/menu_background.png");
     Texture2D title = LoadTexture("assets/menu/title.png");
     Texture2D sport_title = LoadTexture("assets/sports/sport_choice_title.png");
+    Texture2D tennisbg = LoadTexture("assets/backgrounds/tennis_background.png");
 
     Texture2D sportpngs[] = {
         LoadTexture("assets/sports/tennis_button.png"),
@@ -38,6 +39,8 @@ int main() {
         LoadTexture("assets/menu/play_button_hover.png")
     };
 
+    Texture2D racket = LoadTexture("assets/game1/tennis_racket.png");
+
     const char* items[] = {
         "Game 1",
         "Game 2",
@@ -52,6 +55,8 @@ int main() {
 
     const int count = 3;
     int index = 0;
+
+    // tennis ball variables
 
     screen current = screen::menu;
 
@@ -132,6 +137,7 @@ int main() {
         }
 
         else if(current == screen::game1){
+            ClearBackground(WHITE);
             DrawText("TENNIS GAME",500,300,40,WHITE);
             tennis::Update();
             tennis::Draw();
