@@ -7,6 +7,7 @@
 
 int main() {
     InitWindow(screenw, screenh, "bounce back haven");
+    InitAudioDevice();
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);
 
@@ -26,7 +27,7 @@ int main() {
     Texture2D sporthover[] = {
         LoadTexture("assets/sports/tennis_button_hover.png"),
         LoadTexture("assets/sports/back_button_hover.png")
-    };
+    }
 
     // Menu buttons: 0 = Exit, 1 = Play
     Texture2D menupngs[] = {
@@ -89,6 +90,7 @@ int main() {
                 DrawTexture(sporthover[0], 0, 0, WHITE);
 
                 if (clicked) {
+                    tennis::Reset();
                     current = screen::game1;
                 }
             } else {
@@ -107,9 +109,10 @@ int main() {
             }
         }
         else if (current == screen::game1) {
-            DrawText("TENNIS GAME", 500, 300, 40, WHITE);
+            tennis::Update();
+            tennis::Draw();
 
-            if (IsKeyPressed(KEY_ESCAPE)) {
+            if (tennis::WantsExit()) {
                 current = screen::modes;
             }
         }
@@ -129,6 +132,8 @@ int main() {
         UnloadTexture(sporthover[i]);
     }
 
+    tennis::Shutdown();
+    CloseAudioDevice();
     CloseWindow();
     return 0;
 }
