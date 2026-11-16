@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "game.h"
 #include "ui.h"
+#include "tennis.h"
 
 int main(){
     InitWindow(screenw,screenh,"bounce back haven");
@@ -53,17 +54,21 @@ int main(){
             if(IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)){
             
                 if(index == 0){
-                    current = screen::modes;
-                    
-                }else if(index == 1){
+                    tennis::Reset();
                     current = screen::game1;
-                }else if(index == 2){
-                    current = screen::game2;
-                }else if(index == 3){
+                }else if(index == 1){
                     current = screen::exit;
                 }
             }
-        }   
+        }
+
+        if(current == screen::game1){
+            tennis::Update();
+            if(tennis::WantsExit()){
+                EnableCursor();
+                current = screen::menu;
+            }
+        }
 
         // drawing
         BeginDrawing();
@@ -81,8 +86,7 @@ int main(){
 
         }
         if(current == screen::game1){
-
-            
+            tennis::Draw();
         }
         EndDrawing();
     }

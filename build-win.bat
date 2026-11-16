@@ -4,7 +4,9 @@ rem
 rem Works from CMD or PowerShell:
 rem   build-win.bat
 rem
-rem One-time setup, in an "MSYS2 UCRT64" terminal:
+rem One-time setup: a MinGW-w64 g++ that includes raylib, either W64DevKit
+rem (bundles raylib under include/ and lib/, as in C:\raylib) or in an
+rem "MSYS2 UCRT64" terminal:
 rem   pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-raylib
 rem
 rem Optional: set RAYLIB_DIR to use a downloaded raylib instead of MSYS2's package.
@@ -60,7 +62,15 @@ rem --- raylib link flags -----------------------------------------------------
 if defined RAYLIB_DIR (
     set RAYLIB_FLAGS=-I"%RAYLIB_DIR%\include" -L"%RAYLIB_DIR%\lib" -lraylib
 ) else (
-    set RAYLIB_FLAGS=-lraylib -lglfw3
+    rem A raylib bundled with the compiler itself (W64DevKit) is a static
+    rem libraylib.a with no separate glfw3 import library, so -lraylib alone
+    rem links it. MSYS2's raylib package ships a shared libraylib.dll plus
+    rem libglfw3, so that one needs both.
+    set "RAYLIB_FLAGS=-lraylib -lglfw3"
+    set "GXX_BIN="
+    for /f "delims=" %%f in ('where g++') do if not defined GXX_BIN set "GXX_BIN=%%f"
+    for %%f in ("!GXX_BIN!") do set "RAYLIB_LIBDIR=%%~dpf..\lib\"
+    if exist "!RAYLIB_LIBDIR!libraylib.a" if not exist "!RAYLIB_LIBDIR!libglfw3.a" if not exist "!RAYLIB_LIBDIR!libglfw3.dll.a" set "RAYLIB_FLAGS=-lraylib"
 )
 
 echo [build] %NAME%.exe

@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Build bouncebackhaven for Windows with MSYS2 MinGW-w64 g++ + raylib.
 #
-# Run this from an "MSYS2 UCRT64" terminal (not CMD):
-#   pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-raylib
-#   cd /c/path/to/bouncebackhaven
-#   ./build-win.sh
+# 1) Install a MinGW-w64 g++ that includes raylib. Either:
+#    - W64DevKit (https://github.com/skeeto/w64devkit/releases), which bundles
+#      raylib under include/ and lib/ -- this is what C:/raylib uses, or
+#    - in an "MSYS2 UCRT64" terminal:
+#      pacman -S --needed mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-raylib
+# 2) cd /c/path/to/bouncebackhaven
+#    ./build-win.sh
 #
 # Env overrides:
 #   NAME=mygame        output exe name (default: bouncebackhaven)
@@ -39,6 +42,11 @@ fi
 
 mkdir -p "$BUILD_DIR"
 
+# raylib bundled with the compiler itself (W64DevKit ships include/raylib.h plus
+# a static lib/libraylib.a next to g++, so -lraylib is enough and there is no
+# separate glfw3 to link against).
+GXX_PREFIX="$(cd "$(dirname "$(command -v g++)")/.." && pwd)"
+
 CXXFLAGS=(-std=c++17 -O2 -Wall -Wextra)
 LDFLAGS=(-lopengl32 -lgdi32 -lwinmm)
 RAYLIB_NOTE="MSYS2 raylib ($(pkg-config --modversion raylib 2>/dev/null || echo unknown))"
@@ -48,6 +56,15 @@ if [ -n "${RAYLIB_DIR:-}" ] && [ -f "$RAYLIB_DIR/lib/libraylib.a" ]; then
     CXXFLAGS+=(-I"$RAYLIB_DIR/include")
     LDFLAGS=("$RAYLIB_DIR/lib/libraylib.a" "${LDFLAGS[@]}")
     RAYLIB_NOTE="raylib at $RAYLIB_DIR"
+elif [ -n "${RAYLIB_DIR:-}" ] && [ -f "$RAYLIB_DIR/src/libraylib.a" ]; then
+    # raylib source/release tree laid out as raylib/src/.
+    CXXFLAGS+=(-I"$RAYLIB_DIR/src")
+    LDFLAGS=("$RAYLIB_DIR/src/libraylib.a" "${LDFLAGS[@]}")
+    RAYLIB_NOTE="raylib at $RAYLIB_DIR"
+elif [ -f "$GXX_PREFIX/include/raylib.h" ] && [ -f "$GXX_PREFIX/lib/libraylib.a" ]; then
+    # Toolchain-bundled raylib (static): no glfw3 needed.
+    LDFLAGS=(-lraylib "${LDFLAGS[@]}")
+    RAYLIB_NOTE="raylib bundled with $(basename "$GXX_PREFIX")"
 elif pkg-config --exists raylib 2>/dev/null; then
     # MSYS2 package. It ships a shared libraylib.dll, so link glfw3 too.
     read -r -a PC_FLAGS <<< "$(pkg-config --cflags --libs raylib)"
