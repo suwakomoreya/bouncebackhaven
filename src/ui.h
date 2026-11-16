@@ -7,6 +7,7 @@ const int screenw = 1280;
 const int screenh = 720;
 //textures
 Texture2D gamebg[3];
+
 screen current;
 int screencount;
 void drawbg(){
@@ -20,5 +21,7 @@ void drawbg(){
         }
     }
 
-
+}
+void mode(){
+    
 }
