@@ -340,7 +340,7 @@ void drawHud() {
                                      : Color{240, 90, 90, 255};
     DrawRectangleRounded(Rectangle{18.0f, 70.0f, barW, barH}, 0.6f, 8, Fade(BLACK, 0.45f));
     DrawRectangleRounded(Rectangle{21.0f, 73.0f, (barW - 6.0f) * ratio, barH - 6.0f}, 0.6f, 8, fill);
-    DrawText("STAMINA", 18, 92, 16, Fade(RAYWHITE, 0.55f));
+    DrawText("HEALTH", 18, 92, 16, Fade(RAYWHITE, 0.55f));
 
     // Rally, right aligned in the right-hand stands so it never hides the ball.
     if (g.combo > 0) {
