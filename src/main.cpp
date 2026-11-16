@@ -3,7 +3,7 @@
 #include "raylib.h"
 #include "game.h"
 #include "ui.h"
-
+// adding stuff
 int main() {
     InitWindow(screenw, screenh, "bounce back haven");
     InitAudioDevice();
