@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="#000000">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Ccircle cx='16' cy='16' r='9' fill='%23dfff4f'/%3E%3C/svg%3E">
+  <title>Bounce Back Haven</title>
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      touch-action: none;
+    }
+
+    /* Keep the canvas at 16:9 so itch.io can letterbox it cleanly. The canvas
+       is stretched by CSS but keeps its 1280x720 backing store, which also
+       keeps raylib's mouse coordinates correct. */
+    #stage {
+      position: relative;
+      width: min(100vw, calc(100vh * 16 / 9));
+      height: min(100vh, calc(100vw * 9 / 16));
+      background: #000;
+    }
+
+    canvas.emscripten {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      outline: none;
+      background: #000;
+      cursor: default;
+    }
+
+    #loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      background: #000;
+      color: #dfff4f;
+      font-family: "Courier New", monospace;
+      font-size: 18px;
+      letter-spacing: 3px;
+      pointer-events: none;
+      transition: opacity 250ms ease;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+    }
+
+    #bar {
+      width: 220px;
+      height: 6px;
+      overflow: hidden;
+      border-radius: 3px;
+      background: #1d1d1d;
+    }
+
+    #bar > i {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: #dfff4f;
+      transition: width 120ms linear;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+    <div id="loading">
+      <div>BOUNCE BACK HAVEN</div>
+      <div id="bar"><i></i></div>
+    </div>
+  </div>
+
+  <script>
+    // Browsers create the Web Audio context in a "suspended" state until the
+    // player interacts with the page. Wrap AudioContext so every context can
+    // be resumed by the first click/keypress (the menu button click).
+    (function () {
+      var contexts = [];
+      var Original = window.AudioContext || window.webkitAudioContext;
+      if (!Original) return;
+
+      try {
+        var Wrapped = new Proxy(Original, {
+          construct: function (target, args) {
+            var ctx = new target(...args);
+            contexts.push(ctx);
+            return ctx;
+          }
+        });
+        if (window.AudioContext) window.AudioContext = Wrapped;
+        if (window.webkitAudioContext) window.webkitAudioContext = Wrapped;
+      } catch (e) {
+        // Proxy is unavailable in some old browsers; audio still works after
+        // the browser decides to unlock it on its own.
+      }
+
+      function resumeAudio() {
+        for (var i = 0; i < contexts.length; i++) {
+          if (contexts[i].state === "suspended") contexts[i].resume();
+        }
+      }
+
+      ["pointerdown", "mousedown", "touchstart", "keydown"].forEach(function (name) {
+        window.addEventListener(name, resumeAudio, { passive: true });
+      });
+    })();
+
+    var Module = {
+      canvas: document.getElementById("canvas"),
+      print: function (text) { console.log(text); },
+      printErr: function (text) { console.error(text); },
+      onRuntimeInitialized: function () { hideLoading(); },
+      setStatus: function (text) {
+        if (!text) {
+          hideLoading();
+          return;
+        }
+        var match = text.match(/\((\d+)\s*\/\s*(\d+)\)/);
+        if (match) {
+          var percent = (parseInt(match[1], 10) / parseInt(match[2], 10)) * 100;
+          var bar = document.querySelector("#bar > i");
+          if (bar) bar.style.width = percent.toFixed(1) + "%";
+        }
+      },
+      monitorRunDependencies: function () {}
+    };
+
+    function hideLoading() {
+      var loading = document.getElementById("loading");
+      if (loading) loading.classList.add("hidden");
+    }
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>

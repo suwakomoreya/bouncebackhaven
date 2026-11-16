@@ -3,3 +3,9 @@ cd "$HOME/hackclub hcb/bouncebackhaven" && mkdir -p build && g++ -std=c++17 -O2 
 mkdir -p build
 g++ -std=c++17 -O2 -Wall -Wextra -I. src/*.cpp -o build/bouncebackhaven.exe -lraylib -lglfw3 -lopengl32 -lgdi32 -lwinmm
 
+web / itch.io build (from the project folder):
+powershell -ExecutionPolicy Bypass -File .\build-web.ps1
+
+windows exe build + run (from PowerShell in the project folder):
+.\build-win.bat run
+

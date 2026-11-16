@@ -2,7 +2,8 @@
 rem Build bouncebackhaven for Windows with MSYS2 MinGW-w64 + raylib.
 rem
 rem Works from CMD or PowerShell:
-rem   build-win.bat
+rem   build-win.bat        compile only
+rem   build-win.bat run    compile and launch the game
 rem
 rem One-time setup: a MinGW-w64 g++ that includes raylib, either W64DevKit
 rem (bundles raylib under include/ and lib/, as in C:\raylib) or in an
@@ -89,4 +90,11 @@ for %%d in (libraylib.dll glfw3.dll) do (
 
 echo [ok]    %BUILD_DIR%\%NAME%.exe
 echo         run: "%BUILD_DIR%\%NAME%.exe"
+
+rem Optional: "build-win.bat run" compiles and launches the game.
+if /i "%~1"=="run" (
+    pushd "%ROOT%"
+    "%BUILD_DIR%\%NAME%.exe"
+    popd
+)
 exit /b 0

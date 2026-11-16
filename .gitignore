@@ -1,3 +1,8 @@
 
 .DS_Store
 *.o
+
+# WebAssembly build output / downloaded toolchain sources
+.deps/
+dist/web/
+dist/bouncebackhaven-web.zip
